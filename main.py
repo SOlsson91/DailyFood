@@ -1,26 +1,33 @@
 from playwright.sync_api import sync_playwright
 import time
 import datetime
+from googletrans import Translator
+
+weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"]
+day = weekdays[datetime.date.today().weekday()]
 
 def get_weekday_food(text_input):
-    weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"]
-    day = weekdays[datetime.date.today().weekday()]
+    food = ""
 
     rows = text_input.split('\n')
     found = False
     for row in rows:
         if found:
-            print(row)
+            #print(row)
+            food += row
+            food += "\n"
             break
         if day in row:
             found = True
 
+    translator = Translator()
+    print(translator.translate(food, dest='en').text)
+
 def get_orangeriet_food(text_input):
-    weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"]
-    day = weekdays[datetime.date.today().weekday()]
     next_day = weekdays[datetime.date.today().weekday() + 1]
     #print(day)
     rows = text_input.split('\n')
+    food = ""
 
     found = False
     index = 0
@@ -32,27 +39,35 @@ def get_orangeriet_food(text_input):
             if next_day in row:
                 found = False
                 break
-            print(row)
+            #print(row)
+            food += row + "\n"
 
         if day in row:
             found = True
-            print(row)
+            #print(row)
         index += 1
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
-    page.goto("https://mattiasmat.se/cafeet-i-vaxthuset/")
+    translator = Translator()
+    print(translator.translate(food, dest='en').text)
 
-    growhouse_selector = 'div.entry-content:nth-child(2) div'
-    orangeriet_selector = 'div.lunch-content'
+def main():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto("https://mattiasmat.se/cafeet-i-vaxthuset/")
 
-    print("Växthuset: ")
-    monday_text = page.query_selector(growhouse_selector).text_content()
-    get_weekday_food(monday_text)
+        growhouse_selector = 'div.entry-content:nth-child(2) div'
+        orangeriet_selector = 'div.lunch-content'
 
-    print("\nOrangeriet: ")
-    orangeriet_text = page.query_selector(orangeriet_selector).text_content()
-    get_orangeriet_food(orangeriet_text)
+        print("Growhouse: ")
+        monday_text = page.query_selector(growhouse_selector).text_content()
+        get_weekday_food(monday_text)
 
-    browser.close()
+        print("\nOrangeriet: ")
+        orangeriet_text = page.query_selector(orangeriet_selector).text_content()
+        get_orangeriet_food(orangeriet_text)
+
+        browser.close()
+
+if __name__ == "__main__":
+    main()
